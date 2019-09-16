@@ -1,2 +1,2 @@
 # project1-kbolton
-"Connected to RStudio"
+It only gets better from here
