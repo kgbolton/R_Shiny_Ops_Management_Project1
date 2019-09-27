@@ -33,8 +33,8 @@ electionTotals <- formatElections %>%
     summarise(electionTotal = sum(VotesReceived))
 
 # Header and title
-header <- dashboardHeader(title = "Florida Statewide Elections"
-                          #stuff)
+header <- dashboardHeader(title = "Florida Statewide Elections",
+                          titleWidth = 280
                           
 )
 
@@ -49,7 +49,7 @@ sidebar <- dashboardSidebar(
         # Inputs to plots
         
         #Second Menu Item
-        menuItem("Table", icon = icon("table"))
+        menuItem("Table", icon = icon("table"), tabName = "table")
     )
 )
 
@@ -57,11 +57,11 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(tabItems(
     
     # Plot page
-    tabItem("plot",
+    tabItem(tabName = "plot",
             # info box
-            fluidRow(column(24, 
-                infoBoxOutput("context")
-            )),
+            fluidPage( 
+                box(title = "Amendment 4", "In November 2018, Florida voters passed a ballot measure to return the right to vote to former felons having met certain criteria. This measure launched one of the largest enfranchisement efforts in modern U.S. history, with more than 1 million people potentially eligible to regain their right to vote in a state with a population of 21 million.", width = 12)
+            ),
             # value boxes
             fluidRow(
                 valueBoxOutput("pMargins"),
@@ -69,19 +69,28 @@ body <- dashboardBody(tabItems(
             )
             
             #
-            )
+    ),
     
-    # stuff
-))
+    # Data Table Page ----------------------------------------------
+    tabItem("table",
+            fluidPage(
+                box(title = "Election Results", DT::dataTableOutput("table"), width = 12))
+    
+)))
 
-ui <- dashboardPage(header, sidebar, body)
+ui <- dashboardPage(header, sidebar, body, skin="purple")
 
 # Define server function required to create plots and value boxes
 server <- function(input, output) {
 
+    # Data table of characters ----------------------------------------------
+    output$table <- DT::renderDataTable(
+        electionsTable, options = list(pageLength=15)
+    )
+    
     # Context info box ----------------------------------------------
     output$context <- renderInfoBox({
-        infoBox(title = "", value = "Amendment 4", subtitle = "In November 2018, Florida voters passed a ballot measure to return the right to vote to former felons having met certain criteria. This measure launched one of the largest enfranchisement efforts in modern U.S. history, with more than 1 million people potentially eligible to regain their right to vote in a state with a population of 21 million.", icon = icon("ok", lib = "glyphicon"), color = "blue")
+        infoBox(title = "", value = "Amendment 4", subtitle = "In November 2018, Florida voters passed a ballot measure to return the right to vote to former felons having met certain criteria. This measure launched one of the largest enfranchisement efforts in modern U.S. history, with more than 1 million people potentially eligible to regain their right to vote in a state with a population of 21 million.", icon = icon("vote-yea"), color = "blue", width = 12)
     })
     
 
