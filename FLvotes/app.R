@@ -122,10 +122,37 @@ ui <- dashboardPage(header, sidebar, body, skin="purple")
 
 # Define server function required to create plots and value boxes
 server <- function(input, output) {
+    
+    # Reactive registration data ----------------------------------------------
+    regInput <- reactive({
+        yearreg <- filter(voter_reg, Year == input$year)
+        # return dataframe
+        return(yearreg)
+    })
+    
+    # Reactive turnout data ----------------------------------------------
+    turnInput <- reactive({
+        pyears <- turnout2[c(1,3,5),]
+        myears <- turnout2[c(2,4,6),]
+        M <- c(input$midterm, input$midterm)
+        P <- c(input$presidential, input$presidential)
+        selectyears <- ifelse((M&P), turnout2, ifelse(M, myears, pyears))
+        seriesdata <- data.frame(selectyears)
+        colnames(seriesdata) <- c("Year", "Pturnout" )
+        # return dataframe
+        return(seriesdata)
+    })
 
+    # Reactive elections data ----------------------------------------------
+    electionsInput <- reactive({
+        results <- electionsTable
+        # return dataframe
+        return(results)
+    })
+    
     # A plot showing the total party registration -----------------------------
     output$plot_totalreg <- renderPlotly({
-        yearreg <- filter(voter_reg, Year == input$year)
+        yearreg <- regInput()
         partyreg <- gather(yearreg[1,4:7]/1000000, key="party", value="registered")
         partyreg[,1] <- c("Republicans", "Democrats", "Minor Party", "No Party Preference")
         partyreg$party <- factor(partyreg$party, levels = partyreg$party)
@@ -147,15 +174,8 @@ server <- function(input, output) {
     
     # A plot showing turnout over time -----------------------------
     output$plot_turnout <- renderPlotly({
-        pyears <- turnout2[c(1,3,5),]
-        myears <- turnout2[c(2,4,6),]
-        M <- c(input$midterm, input$midterm)
-        P <- c(input$presidential, input$presidential)
-        selectyears <- ifelse((M&P), turnout2, ifelse(M, myears, pyears))
-        seriesdata <- data.frame(selectyears)
-        colnames(seriesdata) <- c("Year", "Pturnout" )
+        seriesdata <- turnInput()
 
-        
         # Generate Plot ----------------------------------------------
         ggplot(data = seriesdata, aes(x = Year, y = Pturnout)) + geom_line() + labs(y="Turnout, % of registered voters") + theme_bw() + scale_x_continuous(limits = c(2008,2018), breaks = c(2008,2010,2012,2014,2016,2018)) + scale_y_continuous(limits = c(0,100))
     })
@@ -183,7 +203,7 @@ server <- function(input, output) {
     
     # Data table of characters ----------------------------------------------
     output$table <- DT::renderDataTable(
-        electionsTable, options = list(pageLength=15)
+        electionsInput(), options = list(pageLength=15)
     )
     
     # Context info box ----------------------------------------------
